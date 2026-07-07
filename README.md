@@ -128,6 +128,8 @@ Fitur chatbot pada aplikasi ini menggunakan model Gemini dari Google. Untuk mend
 6. Tunggu proses pembuatan selesai, lalu salin (copy) string API Key yang muncul.
 7. Tempel (paste) kunci tersebut ke dalam file `.env` di bagian `GEMINI_API_KEY`.
 
+Kalau API key tidak diisi, atau panggilan ke Gemini gagal, backend otomatis jatuh ke mode rule-based: pertanyaan dicocokkan dengan kata kunci (belum selesai, in progress, done, deadline hari ini/besok/minggu ini, terlambat, assignee dari task tertentu, task milik user tertentu, dan lain-lain), lalu dijawab langsung dari query ke database. Pencarian judul task juga pakai pencocokan kata dan fuzzy match supaya tetap ketemu meskipun user tidak menulis judul persis sama.
+
 > **Catatan:** Google menyediakan kuota gratis (_Free Tier_) yang sudah lebih dari cukup untuk kebutuhan technical test ini.
 
 ## Catatan / Asumsi
