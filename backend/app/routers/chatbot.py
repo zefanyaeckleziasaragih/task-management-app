@@ -20,7 +20,7 @@ load_dotenv()
 router = APIRouter(prefix="/chatbot", tags=["chatbot"])
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 STOPWORDS = {
     "task", "tugas", "yang", "dari", "untuk", "dengan", "adalah", "apa", "saja",
@@ -186,27 +186,57 @@ def _fallback_answer(message: str, db: Session) -> str:
     )
 
 
-def _ask_gemini(message: str, tasks) -> str:
-    import google.generativeai as genai
+def _ask_gemini(message: str, tasks, history: list) -> str:
+    import time
 
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel(GEMINI_MODEL)
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
     context = _build_task_context(tasks)
-    prompt = (
+    system_instruction = (
         "Kamu adalah asisten yang membantu menjawab pertanyaan seputar data task "
         f"management untuk sebuah tim. Hari ini tanggal {date.today().isoformat()}. "
         "Jawab HANYA berdasarkan data task di bawah, jangan mengarang data yang tidak ada. "
         "Jika data yang ditanyakan tidak ditemukan, katakan dengan jujur bahwa datanya "
-        "tidak tersedia. Jawab singkat, jelas, dan ramah dalam Bahasa Indonesia.\n\n"
-        f"Data task saat ini:\n{context}\n\n"
-        f"Pertanyaan pengguna: {message}"
+        "tidak tersedia. Jawab singkat, jelas, dan ramah dalam Bahasa Indonesia.\n"
+        "PENTING soal konteks: perhatikan riwayat percakapan sebelumnya. Kalau user bertanya "
+        "lanjutan yang merujuk ke jawaban kamu sebelumnya (misal 'itu', 'yang tadi', 'apa saja "
+        "task itu?', 'siapa assignee-nya?'), jawab berdasarkan subset/konteks yang sudah "
+        "disebutkan sebelumnya, JANGAN kembali menjawab dari semua data task dari awal.\n"
+        "PENTING soal format: jawab dalam PLAIN TEXT saja, jangan pakai format Markdown sama "
+        "sekali (tidak ada tanda bintang **, tidak ada tanda pagar #, tidak ada bullet dengan "
+        "'*' atau '-'). Kalau perlu daftar, tulis tiap item di baris baru diawali angka seperti "
+        "'1. ...', '2. ...' tanpa simbol markdown lainnya.\n\n"
+        f"Data task saat ini:\n{context}"
     )
-    response = model.generate_content(prompt)
-    text = (response.text or "").strip()
-    if not text:
-        raise ValueError("Respon kosong dari model Gemini")
-    return text
+
+    contents = []
+    for h in history[-10:]: 
+        role = "user" if h.role == "user" else "model"
+        contents.append(types.Content(role=role, parts=[types.Part(text=h.text)]))
+    contents.append(types.Content(role="user", parts=[types.Part(text=message)]))
+
+    last_error: Exception | None = None
+    for attempt in range(3): 
+        try:
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=contents,
+                config=types.GenerateContentConfig(system_instruction=system_instruction),
+            )
+            text = (response.text or "").strip()
+            if not text:
+                raise ValueError("Respon kosong dari model Gemini")
+            return text
+        except Exception as e:
+            last_error = e
+            is_transient = "UNAVAILABLE" in str(e) or "503" in str(e) or "overloaded" in str(e).lower()
+            if is_transient and attempt < 2:
+                time.sleep(1.5 * (attempt + 1)) 
+                continue
+            raise last_error
 
 
 @router.post("", response_model=ChatResponse)
@@ -222,9 +252,9 @@ def chat(
     if GEMINI_API_KEY:
         try:
             tasks = db.query(Task).all()
-            reply = _ask_gemini(message, tasks)
+            reply = _ask_gemini(message, tasks, payload.history)
             return ChatResponse(reply=reply)
-        except Exception:
-            pass  # LLM gagal/tidak tersedia -> pakai jawaban rule-based di bawah
+        except Exception as e:
+            print(f"[chatbot] Gemini call failed, falling back. Error: {e!r}")
 
     return ChatResponse(reply=_fallback_answer(message, db))

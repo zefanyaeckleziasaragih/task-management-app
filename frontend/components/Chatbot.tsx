@@ -21,7 +21,7 @@ export default function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "bot",
-      text: "Halo! 👋 Aku Task Assistant. Tanyakan apa saja tentang data task di board kamu.",
+      text: "Halo! Aku Task Assistant. Tanyakan apa saja tentang data task di board kamu.",
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -37,12 +37,13 @@ export default function Chatbot() {
 
   async function sendMessage(text: string) {
     if (!text.trim() || loading) return;
+    const historyForRequest = messages;
     setMessages((prev) => [...prev, { role: "user", text }]);
     setInput("");
     setLoading(true);
 
     try {
-      const res = await api.chat(text);
+      const res = await api.chat(text, historyForRequest);
       setMessages((prev) => [...prev, { role: "bot", text: res.reply }]);
     } catch (err) {
       setMessages((prev) => [

@@ -53,15 +53,22 @@ export const api = {
     request<Task>("/tasks", { method: "POST", body: JSON.stringify(input) }),
 
   updateTask: (id: number, input: Partial<TaskInput>) =>
-    request<Task>(`/tasks/${id}`, { method: "PUT", body: JSON.stringify(input) }),
+    request<Task>(`/tasks/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(input),
+    }),
 
-  deleteTask: (id: number) => request<void>(`/tasks/${id}`, { method: "DELETE" }),
+  deleteTask: (id: number) =>
+    request<void>(`/tasks/${id}`, { method: "DELETE" }),
 
   getUsers: () => request<User[]>("/users"),
 
-  chat: (message: string) =>
+  chat: (
+    message: string,
+    history: { role: "user" | "bot"; text: string }[] = [],
+  ) =>
     request<{ reply: string }>("/chatbot", {
       method: "POST",
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, history }),
     }),
 };

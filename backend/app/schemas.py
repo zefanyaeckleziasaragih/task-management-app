@@ -59,8 +59,14 @@ class TaskOut(TaskBase):
 
 
 # ---------- Chatbot ----------
+class ChatMessage(BaseModel):
+    role: str 
+    text: str
+
+
 class ChatRequest(BaseModel):
     message: str
+    history: list[ChatMessage] = []
 
 
 class ChatResponse(BaseModel):
