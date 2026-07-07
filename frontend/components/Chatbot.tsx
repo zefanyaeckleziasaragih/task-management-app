@@ -79,7 +79,7 @@ export default function Chatbot() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-[22rem] max-w-[calc(100vw-2rem)] h-[30rem] max-h-[calc(100vh-3rem)] bg-surface rounded-3xl shadow-2xl border border-border flex flex-col overflow-hidden z-40 animate-fade-in-up">
+    <div className="fixed bottom-6 right-6 w-88 max-w-[calc(100vw-2rem)] h-120 max-h-[calc(100vh-3rem)] bg-surface rounded-3xl shadow-2xl border border-border flex flex-col overflow-hidden z-40 animate-fade-in-up">
       <div className="flex items-center justify-between px-4 py-3.5 bg-primary text-white">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">

@@ -29,7 +29,7 @@ export default function RootLayout({
       lang="id"
       className={`${displayFont.variable} ${bodyFont.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[var(--color-canvas)] text-[var(--color-ink)]">
+      <body className="min-h-full flex flex-col bg-canvas text-ink">
         {children}
       </body>
     </html>

@@ -255,7 +255,7 @@ export default function TasksPage() {
                     </span>
                   </div>
 
-                  <div className="space-y-3 min-h-[80px]">
+                  <div className="space-y-3 min-h-20">
                     {columnTasks.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-border py-8 text-center">
                         <p className="text-xs text-ink-faint">
