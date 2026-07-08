@@ -52,12 +52,27 @@ task-management-app/
    pip install -r requirements.txt
    ```
 
-3. Siapkan database PostgreSQL, lalu jalankan schema.sql untuk membuat tabel dan seed data
+3. Cek/nyalakan service PostgreSQL terlebih dahulu:
 
    ```
-   createdb taskdb
-   psql -d taskdb -f schema.sql
+   # Windows (jalankan sebagai Administrator jika perlu)
+   net start postgresql-x64-<versi>
+
+   # macOS (kalau install via Homebrew)
+   brew services start postgresql
+
+   # Linux
+   sudo service postgresql start
    ```
+
+   Setelah service aktif, buat database dan import schema. Ganti `postgres` di bawah dengan username PostgreSQL kamu kalau berbeda (sesuaikan juga dengan `DATABASE_URL` di `.env` pada langkah 4):
+
+   ```
+   createdb -U postgres taskdb
+   psql -U postgres -d taskdb -f schema.sql
+   ```
+
+   > **Catatan:** kalau tidak menambahkan flag `-U`, `psql`/`createdb` akan otomatis memakai username OS yang sedang login sebagai default, bukan username PostgreSQL yang sebenarnya. Hal ini adalah penyebab paling umum error `password authentication failed for user "..."`.
 
 4. Salin `.env.example` menjadi `.env`, lalu sesuaikan isinya
 
