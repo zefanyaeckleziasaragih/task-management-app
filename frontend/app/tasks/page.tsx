@@ -7,6 +7,7 @@ import { Task, TaskInput, TaskStatus, User } from "@/lib/types";
 import TaskModal from "@/components/TaskModal";
 import TaskCard from "@/components/TaskCard";
 import Chatbot from "@/components/Chatbot";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { getAvatarStyle, getInitials } from "@/lib/avatar";
 import { ChevronDownIcon, LogoutIcon, PlusIcon, SearchIcon } from "@/lib/icons";
 
@@ -50,6 +51,8 @@ export default function TasksPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [search, setSearch] = useState("");
   const [assigneeFilter, setAssigneeFilter] = useState("");
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!getToken()) {
@@ -102,15 +105,22 @@ export default function TasksPage() {
     }
   }
 
-  async function handleDelete(task: Task) {
-    if (
-      !confirm(
-        `Hapus task "${task.title}"? Tindakan ini tidak bisa dibatalkan.`,
-      )
-    )
-      return;
-    await api.deleteTask(task.id);
-    setTasks((prev) => prev.filter((t) => t.id !== task.id));
+  function handleDelete(task: Task) {
+    setTaskToDelete(task);
+  }
+
+  async function confirmDelete() {
+    if (!taskToDelete) return;
+    setDeleting(true);
+    try {
+      await api.deleteTask(taskToDelete.id);
+      setTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
+      setTaskToDelete(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal menghapus task");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   async function handleStatusChange(task: Task, status: TaskStatus) {
@@ -163,6 +173,7 @@ export default function TasksPage() {
           <button
             onClick={handleLogout}
             className="flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition"
+            suppressHydrationWarning
           >
             <LogoutIcon className="w-4 h-4" />
             Keluar
@@ -192,6 +203,7 @@ export default function TasksPage() {
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari task berdasarkan judul atau deskripsi…"
               className="w-full rounded-xl border border-border bg-surface pl-9 pr-3 py-2.5 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+              suppressHydrationWarning
             />
           </div>
 
@@ -199,6 +211,7 @@ export default function TasksPage() {
             <select
               value={assigneeFilter}
               onChange={(e) => setAssigneeFilter(e.target.value)}
+              suppressHydrationWarning
               className="appearance-none rounded-xl border border-border bg-surface pl-3 pr-8 py-2.5 text-sm text-ink outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
             >
               <option value="">Semua assignee</option>
@@ -214,6 +227,7 @@ export default function TasksPage() {
           <button
             onClick={openCreateModal}
             className="flex items-center justify-center gap-1.5 rounded-xl bg-primary text-white px-4 py-2.5 text-sm font-medium shadow-sm shadow-primary/25 hover:bg-primary-hover transition whitespace-nowrap"
+            suppressHydrationWarning
           >
             <PlusIcon className="w-4 h-4" />
             Tambah Task
@@ -255,7 +269,7 @@ export default function TasksPage() {
                     </span>
                   </div>
 
-                  <div className="space-y-3 min-h-20">
+                  <div className="space-y-3 min-h-[80px]">
                     {columnTasks.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-border py-8 text-center">
                         <p className="text-xs text-ink-faint">
@@ -293,6 +307,7 @@ export default function TasksPage() {
             <button
               onClick={openCreateModal}
               className="flex items-center gap-1.5 rounded-xl bg-primary text-white px-4 py-2.5 text-sm font-medium hover:bg-primary-hover transition"
+              suppressHydrationWarning
             >
               <PlusIcon className="w-4 h-4" />
               Tambah Task Pertama
@@ -327,6 +342,18 @@ export default function TasksPage() {
           users={users}
           onClose={() => setModalOpen(false)}
           onSave={handleSave}
+        />
+      )}
+
+      {taskToDelete && (
+        <ConfirmDialog
+          title="Hapus task ini?"
+          message={`Hapus task "${taskToDelete.title}"? Tindakan ini tidak bisa dibatalkan.`}
+          confirmLabel="Hapus"
+          danger
+          loading={deleting}
+          onConfirm={confirmDelete}
+          onCancel={() => setTaskToDelete(null)}
         />
       )}
 
