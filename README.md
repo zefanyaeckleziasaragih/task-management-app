@@ -52,7 +52,18 @@ task-management-app/
    pip install -r requirements.txt
    ```
 
-3. Cek/nyalakan service PostgreSQL terlebih dahulu:
+3. Salin `.env.example` menjadi `.env`, lalu sesuaikan isinya. Tentukan dulu username, password, dan nama database yang mau dipakai di sini, karena akan dipakai lagi persis sama di langkah berikutnya
+
+   ```
+   DATABASE_URL=postgresql://postgres:PASSWORD@localhost:5432/taskdb
+   SECRET_KEY=ganti_dengan_random_string_panjang
+   GEMINI_API_KEY=isi_sendiri
+   GEMINI_MODEL=gemini-2.5-flash
+   ```
+
+   Kalau `GEMINI_API_KEY` tidak diisi, fitur chatbot tetap jalan lewat mode rule-based (dijelaskan di bagian AI Chatbot di bawah).
+
+4. Cek/nyalakan service PostgreSQL terlebih dahulu:
 
    ```
    # Windows (jalankan sebagai Administrator jika perlu)
@@ -65,25 +76,14 @@ task-management-app/
    sudo service postgresql start
    ```
 
-   Setelah service aktif, buat database dan import schema. Ganti `postgres` di bawah dengan username PostgreSQL kamu kalau berbeda (sesuaikan juga dengan `DATABASE_URL` di `.env` pada langkah 4):
+   Setelah service aktif, buat database dan import schema. Gunakan username dan nama database yang sama dengan yang sudah kamu tulis di `DATABASE_URL` pada langkah 3 (di bawah ini contohnya pakai `postgres` dan `taskdb`, ganti kalau punyamu berbeda):
 
    ```
    createdb -U postgres taskdb
    psql -U postgres -d taskdb -f schema.sql
    ```
 
-   > **Catatan:** kalau tidak menambahkan flag `-U`, `psql`/`createdb` akan otomatis memakai username OS yang sedang login sebagai default, bukan username PostgreSQL yang sebenarnya. Hal ini adalah penyebab paling umum error `password authentication failed for user "..."`.
-
-4. Salin `.env.example` menjadi `.env`, lalu sesuaikan isinya
-
-   ```
-   DATABASE_URL=postgresql://postgres:PASSWORD@localhost:5432/taskdb
-   SECRET_KEY=ganti_dengan_random_string_panjang
-   GEMINI_API_KEY=isi_sendiri
-   GEMINI_MODEL=gemini-2.5-flash
-   ```
-
-   Kalau `GEMINI_API_KEY` tidak diisi, fitur chatbot tetap jalan lewat mode rule-based (dijelaskan di bagian AI Chatbot di bawah).
+   > **Catatan:** kalau tidak menambahkan flag `-U`, `psql`/`createdb` akan otomatis memakai username OS kamu yang sedang login sebagai default, bukan username PostgreSQL yang sebenarnya. Hal ini adalah penyebab paling umum error `password authentication failed for user "..."`.
 
 5. Jalankan server
 
